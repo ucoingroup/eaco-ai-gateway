@@ -1,0 +1,20 @@
+{
+  "name": "eaco-ai-gateway",
+  "version": "1.0.0",
+  "description": "AI大模型Token中转站 - 基于EACO的去中心化AI网关",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.11",
+    "ioredis": "^5.3.2",
+    "axios": "^1.6.2",
+    "uuid": "^9.0.1"
+  }
+}
