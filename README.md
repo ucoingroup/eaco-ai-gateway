@@ -4,17 +4,18 @@ EACO-powered AI model token relay station with smart routing, on-chain billing, 
 
 ## Features
 
-- **Smart Model Routing** — Auto-select optimal model based on task complexity (simple/routine/complex)
-- **EACO Payment** — Solana on-chain settlement with 20% discount for $EACO holders
+- **Smart Model Routing** — Auto-select optimal model based on task complexity (light/medium/heavy)
+- **EACO Payment** — 20% discount for $EACO holders with transparent fee distribution
 - **Cache Acceleration** — Redis-based caching reduces API costs up to 90%
 - **Agent World Integration** — Universal identity across the agent internet
-- **15 AI Models** — GPT-4o, Claude 3.5 Sonnet, DeepSeek V3, Gemini 1.5 Pro, Mistral Large, and more
+- **Token Economy** — 50/20/20/10 distribution: node operators, community ops, user growth, Earth Village charity
+- **DAO Governance** — Stake $EACO, propose and vote on ecosystem decisions
 - **10 Languages** — EN, ZH, ES, FR, DE, AR, JA, KO, PT, RU with RTL support
 
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Install dependencies (Node.js >= 18)
 npm install
 
 # 2. Copy env config
@@ -27,43 +28,41 @@ npm start
 
 Server runs at http://localhost:3000
 
-## Architecture
+## Docker
 
-```
-eaco-ai-gateway/
-├── frontend/
-│   ├── index.html          # SPA (Tailwind + Font Awesome)
-│   ├── css/style.css       # Custom styles
-│   └── js/
-│       ├── app.js          # App logic + API playground
-│       └── i18n.js         # 10-language i18n
-├── server/
-│   ├── index.js            # Express entry point
-│   ├── config.js           # Models, pricing, EACO config
-│   ├── middleware/auth.js   # API key auth + rate limiting
-│   ├── routes/api.js       # All API endpoints
-│   ├── services/
-│   │   ├── ai-providers.js # Multi-provider AI adapter
-│   │   ├── cache.js        # Redis/memory cache
-│   │   ├── eaco.js         # EACO payment service
-│   │   └── router.js       # Smart model routing
-│   └── utils/logger.js     # Logger
-├── .env.example
-└── package.json
+```bash
+docker compose up -d
 ```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | /api/v1/health | Health check |
 | POST | /api/v1/chat/completions | Chat (OpenAI-compatible) |
 | GET | /api/v1/models | Available models + pricing |
 | GET | /api/v1/pricing | Detailed pricing |
 | POST | /api/v1/eaco/balance | Query EACO balance |
 | POST | /api/v1/eaco/deposit | EACO deposit |
 | POST | /api/v1/eaco/transfer | EACO transfer |
+| POST | /api/v1/eaco/stake | Stake EACO for node operation |
+| POST | /api/v1/eaco/distribution | Query distribution pools |
+| POST | /api/v1/dao/proposals | Create governance proposal |
+| POST | /api/v1/dao/vote | Vote on proposal |
+| GET | /api/v1/dao/proposals | List proposals |
 | POST | /api/v1/agent-world/register | Agent World register |
 | POST | /api/v1/agent-world/verify | Agent World verify |
+
+## EACO Token Economy
+
+Fee distribution from every API call:
+
+| Allocation | Share | Purpose |
+|-----------|-------|---------|
+| Node Operators | 50% | Reward relay node infrastructure |
+| Community Operations | 20% | Fund community building |
+| User Growth | 20% | Incentivize new user acquisition |
+| Earth Village Charity 🌍 | 10% | Global public benefit |
 
 ## EACO Token
 
@@ -77,3 +76,7 @@ eaco-ai-gateway/
 - [EACO DEX Bot](https://eaco-dexbot.base44.app/)
 - [Earth EACO 3000 Good Deeds](https://eaco-kind-path.base44.app/)
 - [Agent World](https://world.coze.com)
+
+## License
+
+MIT

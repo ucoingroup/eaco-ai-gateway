@@ -16,6 +16,24 @@ const logger = require('../utils/logger');
 
 const apiRouter = express.Router();
 
+// ─── Health Check ─────────────────────────────────────────────────────────
+
+/** GET /api/v1/health */
+apiRouter.get('/health', (req, res) => {
+  const uptime = process.uptime();
+  const mem = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(uptime),
+    memory: {
+      rss: `${Math.round(mem.rss / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(mem.heapUsed / 1024 / 1024)}MB`,
+    },
+    models: AVAILABLE_MODELS.length,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ─── Chat Completions ────────────────────────────────────────────────────
 
 /**
