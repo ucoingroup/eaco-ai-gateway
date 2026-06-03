@@ -6,7 +6,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { MODEL_PRICING, AVAILABLE_MODELS, PAYMENT_MODIFIERS, JWT_SECRET, AGENT_WORLD_API_KEY } = require('../config');
+const { MODEL_PRICING, AVAILABLE_MODELS, PAYMENT_MODIFIERS, FEE_DISTRIBUTION, JWT_SECRET, AGENT_WORLD_API_KEY } = require('../config');
 const { apiKeyAuth, rateLimiter, sanitize } = require('../middleware/auth');
 const cache = require('../services/cache');
 const router = require('../services/router');
@@ -211,6 +211,66 @@ apiRouter.post('/agent-world/verify', (req, res) => {
   } catch (err) {
     res.status(401).json({ error: { message: 'Invalid or expired token' } });
   }
+});
+
+// ─── Staking ─────────────────────────────────────────────────────────────
+
+/** POST /api/v1/eaco/stake */
+apiRouter.post('/eaco/stake', apiKeyAuth, (req, res) => {
+  const { address, amount } = req.body;
+  if (!address || !amount) return res.status(400).json({ error: { message: 'address and amount are required' } });
+  try {
+    const result = eaco.stake(address, parseFloat(amount));
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: { message: err.message } });
+  }
+});
+
+/** GET /api/v1/eaco/stake/:address */
+apiRouter.get('/eaco/stake/:address', apiKeyAuth, (req, res) => {
+  res.json(eaco.getStake(req.params.address));
+});
+
+// ─── DAO ─────────────────────────────────────────────────────────────────
+
+/** POST /api/v1/dao/proposal */
+apiRouter.post('/dao/proposal', apiKeyAuth, (req, res) => {
+  const { title, description, voteType } = req.body;
+  if (!title) return res.status(400).json({ error: { message: 'title is required' } });
+  try {
+    const result = eaco.createProposal(req.apiKey, title, description, voteType);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: { message: err.message } });
+  }
+});
+
+/** POST /api/v1/dao/vote */
+apiRouter.post('/dao/vote', apiKeyAuth, (req, res) => {
+  const { proposalId, support } = req.body;
+  if (!proposalId) return res.status(400).json({ error: { message: 'proposalId is required' } });
+  try {
+    const result = eaco.vote(proposalId, req.apiKey, support);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: { message: err.message } });
+  }
+});
+
+/** GET /api/v1/dao/proposals */
+apiRouter.get('/dao/proposals', (req, res) => {
+  res.json(eaco.getProposals());
+});
+
+// ─── Distribution Pools ──────────────────────────────────────────────────
+
+/** GET /api/v1/eaco/distribution */
+apiRouter.get('/eaco/distribution', (req, res) => {
+  res.json({
+    feeDistribution: eaco.FEE_DISTRIBUTION,
+    pools: eaco.getDistributionPools(),
+  });
 });
 
 module.exports = apiRouter;

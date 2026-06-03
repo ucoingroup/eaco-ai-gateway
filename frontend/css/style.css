@@ -1,4 +1,4 @@
-/* EACO AI Gateway - Custom Styles */
+﻿/* EACO AI Gateway - Custom Styles */
 /* Built on Tailwind CSS base */
 
 :root {
@@ -541,5 +541,62 @@
   .price-table th,
   .price-table td {
     padding: 0.5rem;
+  }
+}
+/* Token Flow Diagram */
+.token-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(18, 18, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.flow-step:hover {
+  border-color: var(--eaco-green);
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.2);
+  transform: translateY(-2px);
+}
+
+.flow-icon {
+  font-size: 2rem;
+}
+
+.flow-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 120px;
+}
+
+.flow-arrow {
+  font-size: 1.5rem;
+  color: var(--eaco-green);
+  animation: pulse-arrow 2s infinite;
+}
+
+@keyframes pulse-arrow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .token-flow {
+    flex-direction: column;
+  }
+  .flow-arrow {
+    transform: rotate(90deg);
   }
 }

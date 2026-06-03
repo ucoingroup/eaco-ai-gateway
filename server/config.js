@@ -55,6 +55,28 @@ const PAYMENT_MODIFIERS = {
   usdc: 1.1,
 };
 
+/** Fee distribution ratios — EACO Token Economy */
+const FEE_DISTRIBUTION = {
+  nodeOperators: 0.50,   // 50% → 节点运营商
+  communityOps: 0.20,    // 20% → 社区运营
+  userGrowth: 0.20,      // 20% → 发展新用户
+  earthVillage: 0.10,    // 10% → 地球村公益
+};
+
+/** DAO governance config */
+const DAO_CONFIG = {
+  votingPeriodHours: 72,
+  quorumPercentage: 10,
+  proposalThreshold: 10000, // minimum EACO to create proposal
+};
+
+/** Staking config */
+const STAKING_CONFIG = {
+  minimumStake: 1000,      // minimum EACO to run a node
+  rewardRatePerMB: 0.5,    // EACO reward per MB processed
+  unbondingPeriodDays: 7,
+};
+
 /** Rate limits (requests per minute per API key). */
 const RATE_LIMITS = {
   windowMs: 60 * 1000,
@@ -77,6 +99,9 @@ module.exports = {
   MODEL_PRICING,
   AVAILABLE_MODELS,
   PAYMENT_MODIFIERS,
+  FEE_DISTRIBUTION,
+  DAO_CONFIG,
+  STAKING_CONFIG,
   RATE_LIMITS,
   CACHE_TTL,
 };

@@ -1,10 +1,10 @@
 /**
  * @fileoverview EACO token payment service.
  * In-memory simulation of wallet balances, deposits, withdrawals, transfers,
- * discount calculation, and fee distribution (30% to buyback pool).
+ * discount calculation, fee distribution, staking, and DAO governance.
  */
 
-const { EACO_MINT_ADDRESS, EACO_DECIMALS, PAYMENT_MODIFIERS } = require('../config');
+const { EACO_MINT_ADDRESS, EACO_DECIMALS, PAYMENT_MODIFIERS, FEE_DISTRIBUTION } = require('../config');
 const logger = require('../utils/logger');
 
 /** Wallet balances (address -> number). Simulated with in-memory Map. */
@@ -13,8 +13,14 @@ const wallets = new Map();
 /** Transaction log. */
 const transactions = [];
 
-/** Fee distribution ratio. */
-const BUYBACK_RATIO = 0.3; // 30% to buyback pool
+/** Cumulative distribution pool balances. */
+const distributionPools = { nodeOperators: 0, communityOps: 0, userGrowth: 0, earthVillage: 0 };
+
+/** Stakes (address -> { amount, since }). */
+const stakes = new Map();
+
+/** DAO proposals. */
+const proposals = [];
 
 /**
  * Get or create a wallet entry.
@@ -27,9 +33,6 @@ function getBalance(address) {
 
 /**
  * Deposit EACO into a wallet (simulated).
- * @param {string} address
- * @param {number} amount
- * @returns {{ balance: number, txId: string }}
  */
 function deposit(address, amount) {
   if (amount <= 0) throw new Error('Deposit amount must be positive');
@@ -46,9 +49,6 @@ function deposit(address, amount) {
 
 /**
  * Withdraw EACO from a wallet (simulated).
- * @param {string} address
- * @param {number} amount
- * @returns {{ balance: number, txId: string }}
  */
 function withdraw(address, amount) {
   if (amount <= 0) throw new Error('Withdraw amount must be positive');
@@ -67,10 +67,6 @@ function withdraw(address, amount) {
 
 /**
  * Transfer EACO between wallets.
- * @param {string} from
- * @param {string} to
- * @param {number} amount
- * @returns {{ fromBalance: number, toBalance: number, txId: string }}
  */
 function transfer(from, to, amount) {
   if (amount <= 0) throw new Error('Transfer amount must be positive');
@@ -89,11 +85,7 @@ function transfer(from, to, amount) {
 }
 
 /**
- * Deduct payment from a wallet with EACO discount.
- * @param {string} address
- * @param {number} baseCostEACO - Cost before discount (in EACO units).
- * @param {'eaco'|'usdc'} paymentMethod
- * @returns {{ charged: number, discount: number, buybackPool: number, balance: number, txId: string }}
+ * Deduct payment from a wallet with four-way fee distribution.
  */
 function deductPayment(address, baseCostEACO, paymentMethod = 'eaco') {
   const modifier = PAYMENT_MODIFIERS[paymentMethod] || 1;
@@ -106,29 +98,97 @@ function deductPayment(address, baseCostEACO, paymentMethod = 'eaco') {
   const newBalance = balance - charged;
   wallets.set(address, newBalance);
 
-  const buybackPool = Math.ceil(charged * BUYBACK_RATIO * 100) / 100;
-  const platformFee = charged - buybackPool;
+  const distribution = {
+    nodeOperators: Math.ceil(charged * FEE_DISTRIBUTION.nodeOperators * 100) / 100,
+    communityOps: Math.ceil(charged * FEE_DISTRIBUTION.communityOps * 100) / 100,
+    userGrowth: Math.ceil(charged * FEE_DISTRIBUTION.userGrowth * 100) / 100,
+    earthVillage: Math.ceil(charged * FEE_DISTRIBUTION.earthVillage * 100) / 100,
+  };
+
+  // Accumulate into distribution pools
+  distributionPools.nodeOperators += distribution.nodeOperators;
+  distributionPools.communityOps += distribution.communityOps;
+  distributionPools.userGrowth += distribution.userGrowth;
+  distributionPools.earthVillage += distribution.earthVillage;
 
   const txId = `tx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
   transactions.push({
     txId, type: 'payment', from: address, to: 'platform',
-    amount: charged, buybackPool, platformFee, paymentMethod, timestamp: Date.now(),
+    amount: charged, distribution, paymentMethod, timestamp: Date.now(),
   });
 
-  logger.info(`EACO payment: ${charged} from ${address} (method=${paymentMethod}, buyback=${buybackPool})`);
-  return { charged, discount, buybackPool, balance: newBalance, txId };
+  logger.info(`EACO payment: ${charged} from ${address} (method=${paymentMethod}, dist=${JSON.stringify(distribution)})`);
+  return { charged, discount, distribution, balance: newBalance, txId };
 }
 
 /**
  * Get transaction history for an address.
- * @param {string} address
- * @returns {Array}
  */
 function getTransactions(address) {
   return transactions.filter(t => t.from === address || t.to === address);
 }
 
+/** Get distribution pool balances (cumulative). */
+function getDistributionPools() {
+  return { ...distributionPools };
+}
+
+/** Stake EACO for node operation. */
+function stake(address, amount) {
+  if (amount <= 0) throw new Error('Stake amount must be positive');
+  const balance = getBalance(address);
+  if (balance < amount) throw new Error('Insufficient balance to stake');
+
+  wallets.set(address, balance - amount);
+
+  const existing = stakes.get(address) || { amount: 0, since: Date.now() };
+  stakes.set(address, { amount: existing.amount + amount, since: existing.since });
+
+  logger.info(`EACO staked: ${amount} from ${address}`);
+  return { stakedAmount: existing.amount + amount, walletBalance: balance - amount };
+}
+
+/** Get stake info for an address. */
+function getStake(address) {
+  return stakes.get(address) || { amount: 0, since: null };
+}
+
+/** Create a DAO proposal. */
+function createProposal(creator, title, description, voteType) {
+  const proposal = {
+    id: `prop_${Date.now()}`,
+    creator, title, description, voteType,
+    votesFor: 0, votesAgainst: 0,
+    voters: new Set(),
+    createdAt: Date.now(),
+    status: 'active',
+  };
+  proposals.push(proposal);
+  return proposal;
+}
+
+/** Vote on a DAO proposal. */
+function vote(proposalId, voter, support) {
+  const proposal = proposals.find(p => p.id === proposalId);
+  if (!proposal) throw new Error('Proposal not found');
+  if (proposal.status !== 'active') throw new Error('Proposal not active');
+  if (proposal.voters.has(voter)) throw new Error('Already voted');
+
+  proposal.voters.add(voter);
+  if (support) proposal.votesFor++;
+  else proposal.votesAgainst++;
+
+  return { proposalId, support, votesFor: proposal.votesFor, votesAgainst: proposal.votesAgainst };
+}
+
+/** Get all DAO proposals. */
+function getProposals() {
+  return proposals.map(p => ({ ...p, voters: p.voters.size }));
+}
+
 module.exports = {
   getBalance, deposit, withdraw, transfer, deductPayment, getTransactions,
-  EACO_MINT_ADDRESS, EACO_DECIMALS,
+  getDistributionPools, stake, getStake,
+  createProposal, vote, getProposals,
+  EACO_MINT_ADDRESS, EACO_DECIMALS, FEE_DISTRIBUTION,
 };
