@@ -88,14 +88,24 @@ function pickFromTier(tier) {
  */
 function routeRequest(request) {
   // Manual override
-  if (request.model && AVAILABLE_MODELS.includes(request.model.toLowerCase())) {
-    const model = request.model.toLowerCase();
+  if (request.model && AVAILABLE_MODELS.includes(request.model)) {
+    const model = request.model;
     logger.info(`Router: manual override -> ${model}`);
     return {
       model,
       tier: 'manual',
       fallbackChain: FALLBACK_CHAINS[model] || [],
     };
+  }
+
+  // Try case-insensitive match
+  if (request.model) {
+    const lowered = request.model.toLowerCase();
+    const matched = AVAILABLE_MODELS.find(m => m.toLowerCase() === lowered);
+    if (matched) {
+      logger.info(`Router: case-insensitive override -> ${matched}`);
+      return { model: matched, tier: 'manual', fallbackChain: FALLBACK_CHAINS[matched] || [] };
+    }
   }
 
   const tier = estimateComplexity(request.messages || []);

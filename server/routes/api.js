@@ -7,7 +7,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const { MODEL_PRICING, AVAILABLE_MODELS, PAYMENT_MODIFIERS, FEE_DISTRIBUTION, JWT_SECRET, AGENT_WORLD_API_KEY } = require('../config');
-const { apiKeyAuth, rateLimiter, sanitize } = require('../middleware/auth');
+const { apiKeyAuth, rateLimiter, sanitize, registerApiKey } = require('../middleware/auth');
 const cache = require('../services/cache');
 const router = require('../services/router');
 const eaco = require('../services/eaco');
@@ -252,8 +252,8 @@ apiRouter.get('/eaco/stake/:address', apiKeyAuth, (req, res) => {
 
 // ─── DAO ─────────────────────────────────────────────────────────────────
 
-/** POST /api/v1/dao/proposal */
-apiRouter.post('/dao/proposal', apiKeyAuth, (req, res) => {
+/** POST /api/v1/dao/proposals */
+apiRouter.post('/dao/proposals', apiKeyAuth, (req, res) => {
   const { title, description, voteType } = req.body;
   if (!title) return res.status(400).json({ error: { message: 'title is required' } });
   try {
@@ -289,6 +289,19 @@ apiRouter.get('/eaco/distribution', (req, res) => {
     feeDistribution: eaco.FEE_DISTRIBUTION,
     pools: eaco.getDistributionPools(),
   });
+});
+
+// ─── Auth / API Key Management ────────────────────────────────────────────
+
+/** POST /api/v1/auth/register — Register new API key (admin secret required) */
+apiRouter.post('/auth/register', (req, res) => {
+  const { admin_secret } = req.body;
+  try {
+    const newKey = registerApiKey(admin_secret);
+    res.json({ apiKey: newKey, message: 'API key registered successfully' });
+  } catch (err) {
+    res.status(403).json({ error: { message: err.message } });
+  }
 });
 
 module.exports = apiRouter;

@@ -70,3 +70,19 @@ assert(pools.earthVillage > 0, 'Earth village pool should be > 0');
 console.log('  ✓ Distribution pools OK');
 
 console.log('\n✅ All 7 tests passed!');
+
+// Test 8: Auth - API key registration
+console.log('Test 8: Auth - API key registration...');
+const { registerApiKey, isValidApiKey } = require('../server/middleware/auth');
+const newKey = registerApiKey('change-me-in-production');
+assert(newKey.startsWith('eaco-'), 'Registered key should start with eaco-');
+console.log('  ✓ Auth registration OK');
+
+// Test 9: Router case-insensitive
+console.log('Test 9: Router case-insensitive match...');
+const routingUpper = router.routeRequest({ model: 'GPT-4O', messages: [{ role: 'user', content: 'hello' }] });
+assert.strictEqual(routingUpper.model, 'gpt-4o', 'Should match case-insensitively');
+assert.strictEqual(routingUpper.tier, 'manual', 'Should be manual tier');
+console.log('  ✓ Router case-insensitive OK');
+
+console.log('\n✅ All 9 tests passed!');

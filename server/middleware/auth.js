@@ -4,8 +4,38 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET, RATE_LIMITS } = require('../config');
+const { JWT_SECRET, RATE_LIMITS, ADMIN_SECRET } = require('../config');
 const logger = require('../utils/logger');
+
+/** In-memory API key store: key -> { createdAt, rateLimitTier }. */
+const apiKeys = new Map();
+
+// Bootstrap: auto-register admin key
+apiKeys.set(`eaco-admin-${Date.now()}`, { createdAt: Date.now(), rateLimitTier: 'admin' });
+
+/**
+ * Register a new API key (admin only).
+ * @param {string} adminKey
+ * @returns {string} new API key
+ */
+function registerApiKey(adminKey) {
+  if (adminKey !== ADMIN_SECRET) throw new Error('Unauthorized: admin key required');
+  const newKey = `eaco-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  apiKeys.set(newKey, { createdAt: Date.now(), rateLimitTier: 'standard' });
+  logger.info(`New API key registered: ${newKey.slice(0, 12)}...`);
+  return newKey;
+}
+
+/**
+ * Validate an API key exists in the registry.
+ * @param {string} key
+ * @returns {boolean}
+ */
+function isValidApiKey(key) {
+  // Accept any key during development; in production, require registered keys
+  if (process.env.NODE_ENV !== 'production') return true;
+  return apiKeys.has(key);
+}
 
 /** In-memory rate limit store: apiKey -> { count, resetAt }. */
 const rateStore = new Map();
@@ -30,6 +60,9 @@ function apiKeyAuth(req, res, next) {
   const key = extractApiKey(req);
   if (!key) {
     return res.status(401).json({ error: { message: 'Missing API key. Provide x-api-key header or Authorization: Bearer <key>' } });
+  }
+  if (!isValidApiKey(key)) {
+    return res.status(401).json({ error: { message: 'Invalid API key. Register at POST /api/v1/auth/register' } });
   }
   req.apiKey = key;
   next();
@@ -95,4 +128,4 @@ function sanitize(req, res, next) {
   next();
 }
 
-module.exports = { apiKeyAuth, jwtAuth, rateLimiter, sanitize };
+module.exports = { apiKeyAuth, jwtAuth, rateLimiter, sanitize, registerApiKey };

@@ -270,18 +270,34 @@ function escapeHtml(text) {
 }
 
 // ============ Pricing Table ============
-const modelPricing = [
-  { id: "gpt-4o", input: 2.50, output: 10.00, eacoInput: 2.00, eacoOutput: 8.00 },
-  { id: "gpt-4o-mini", input: 0.15, output: 0.60, eacoInput: 0.12, eacoOutput: 0.48 },
-  { id: "claude-sonnet-4-20250514", input: 3.00, output: 15.00, eacoInput: 2.40, eacoOutput: 12.00 },
-  { id: "claude-3.5-haiku", input: 0.80, output: 4.00, eacoInput: 0.64, eacoOutput: 3.20 },
-  { id: "deepseek-chat", input: 0.14, output: 0.28, eacoInput: 0.11, eacoOutput: 0.22 },
-  { id: "deepseek-reasoner", input: 0.55, output: 2.19, eacoInput: 0.44, eacoOutput: 1.75 },
-  { id: "gemini-2.0-flash", input: 0.10, output: 0.40, eacoInput: 0.08, eacoOutput: 0.32 },
-  { id: "gemini-2.5-pro", input: 1.25, output: 10.00, eacoInput: 1.00, eacoOutput: 8.00 },
-  { id: "llama-3.1-70b", input: 0.60, output: 0.80, eacoInput: 0.48, eacoOutput: 0.64 },
-  { id: "mistral-large", input: 2.00, output: 6.00, eacoInput: 1.60, eacoOutput: 4.80 },
-];
+let modelPricing = [];
+
+async function loadPricing() {
+  try {
+    const resp = await fetch("/api/v1/pricing");
+    if (resp.ok) {
+      const data = await resp.json();
+      const eacoDiscount = data.payment_modifiers?.eaco || 0.8;
+      modelPricing = Object.entries(data.models).map(([id, p]) => ({
+        id,
+        input: p.input,
+        output: p.output,
+        eacoInput: +(p.input * eacoDiscount).toFixed(2),
+        eacoOutput: +(p.output * eacoDiscount).toFixed(2),
+      }));
+    }
+  } catch {
+    // Fallback if API unavailable
+    modelPricing = [
+      { id: "gpt-4o", input: 30, output: 60, eacoInput: 24, eacoOutput: 48 },
+      { id: "gpt-4o-mini", input: 2, output: 8, eacoInput: 1.6, eacoOutput: 6.4 },
+      { id: "claude-3.5-sonnet", input: 15, output: 50, eacoInput: 12, eacoOutput: 40 },
+      { id: "deepseek-v3", input: 1, output: 2, eacoInput: 0.8, eacoOutput: 1.6 },
+      { id: "gemini-1.5-pro", input: 8, output: 20, eacoInput: 6.4, eacoOutput: 16 },
+      { id: "mistral-large", input: 12, output: 24, eacoInput: 9.6, eacoOutput: 19.2 },
+    ];
+  }
+}
 
 function renderPricingTable() {
   const tbody = document.getElementById("pricing-tbody");
@@ -289,15 +305,14 @@ function renderPricingTable() {
 
   tbody.innerHTML = "";
   modelPricing.forEach((m) => {
-    const savingsInput = ((m.input - m.eacoInput) / m.input * 100).toFixed(0);
-    const savingsOutput = ((m.output - m.eacoOutput) / m.output * 100).toFixed(0);
+    const savingsPct = m.input > 0 ? ((1 - m.eacoInput / m.input) * 100).toFixed(0) : 0;
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="font-semibold">${m.id}</td>
-      <td>$${m.input.toFixed(2)}</td>
-      <td>$${m.output.toFixed(2)}</td>
-      <td class="savings">$${m.eacoInput.toFixed(2)} / $${m.eacoOutput.toFixed(2)}</td>
-      <td class="savings">${savingsInput}% / ${savingsOutput}%</td>
+      <td>${m.input.toFixed(2)} EACO</td>
+      <td>${m.output.toFixed(2)} EACO</td>
+      <td class="savings">${m.eacoInput.toFixed(2)} / ${m.eacoOutput.toFixed(2)}</td>
+      <td class="savings">${savingsPct}% OFF</td>
     `;
     tbody.appendChild(row);
   });
@@ -402,11 +417,12 @@ function initSmoothScroll() {
 }
 
 // ============ Initialize ============
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initLanguage();
   initWallet();
   initMobileMenu();
   initPlayground();
+  await loadPricing();
   renderPricingTable();
   initStats();
   initScrollAnimations();

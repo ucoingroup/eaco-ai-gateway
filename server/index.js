@@ -55,14 +55,12 @@ async function start() {
   await cache.init();
 
   app.listen(PORT, () => {
-    logger.info('╔══════════════════════════════════════════╗');
-    logger.info('║       EACO AI Gateway - Running          ║');
-    logger.info(`║       Port: ${PORT}                         ║`);
-    logger.info(`║       Env:  ${process.env.NODE_ENV || 'development'}           ║`);
-    logger.info('╚══════════════════════════════════════════╝');
-    logger.info(`API:  http://localhost:${PORT}/api/v1`);
-    logger.info(`Chat: http://localhost:${PORT}/api/v1/chat/completions`);
-    logger.info(`Docs: http://localhost:${PORT}`);
+    logger.info('=== EACO AI Gateway ===');
+    logger.info(`  Port: ${PORT}`);
+    logger.info(`  Env:  ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`  API:  http://localhost:${PORT}/api/v1`);
+    logger.info(`  Chat: http://localhost:${PORT}/api/v1/chat/completions`);
+    logger.info(`  Web:  http://localhost:${PORT}`);
   });
 }
 

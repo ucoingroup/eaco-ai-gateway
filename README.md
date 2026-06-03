@@ -36,22 +36,25 @@ docker compose up -d
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/v1/health | Health check |
-| POST | /api/v1/chat/completions | Chat (OpenAI-compatible) |
-| GET | /api/v1/models | Available models + pricing |
-| GET | /api/v1/pricing | Detailed pricing |
-| POST | /api/v1/eaco/balance | Query EACO balance |
-| POST | /api/v1/eaco/deposit | EACO deposit |
-| POST | /api/v1/eaco/transfer | EACO transfer |
-| POST | /api/v1/eaco/stake | Stake EACO for node operation |
-| POST | /api/v1/eaco/distribution | Query distribution pools |
-| POST | /api/v1/dao/proposals | Create governance proposal |
-| POST | /api/v1/dao/vote | Vote on proposal |
-| GET | /api/v1/dao/proposals | List proposals |
-| POST | /api/v1/agent-world/register | Agent World register |
-| POST | /api/v1/agent-world/verify | Agent World verify |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | /api/v1/health | — | Health check |
+| POST | /api/v1/auth/register | admin | Register new API key |
+| POST | /api/v1/chat/completions | key | Chat (OpenAI-compatible) |
+| GET | /api/v1/models | — | Available models + pricing |
+| GET | /api/v1/pricing | — | Detailed pricing |
+| POST | /api/v1/eaco/balance | key | Query EACO balance |
+| POST | /api/v1/eaco/deposit | key | EACO deposit |
+| POST | /api/v1/eaco/withdraw | key | EACO withdraw |
+| POST | /api/v1/eaco/transfer | key | EACO transfer |
+| POST | /api/v1/eaco/stake | key | Stake EACO for node operation |
+| GET | /api/v1/eaco/stake/:address | key | Get stake info |
+| GET | /api/v1/eaco/distribution | — | Query distribution pools |
+| POST | /api/v1/dao/proposals | key | Create governance proposal |
+| POST | /api/v1/dao/vote | key | Vote on proposal |
+| GET | /api/v1/dao/proposals | — | List proposals |
+| POST | /api/v1/agent-world/register | key | Agent World register |
+| POST | /api/v1/agent-world/verify | — | Agent World verify |
 
 ## EACO Token Economy
 
@@ -69,6 +72,22 @@ Fee distribution from every API call:
 - **Name**: EACO (Earth's Best Coin)
 - **Chain**: Solana
 - **CA**: `DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH`
+
+## Testing
+
+```bash
+npm test   # 9 smoke tests
+```
+
+## Deploy
+
+```bash
+# Bash (Linux/Mac)
+bash deploy-mirrors.sh
+
+# PowerShell (Windows)
+.\deploy-mirrors.ps1
+```
 
 ## Links
 
