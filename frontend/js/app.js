@@ -161,10 +161,13 @@ async function loadModels() {
   } catch (err) {
     // Fallback models if API not available
     const fallbackModels = [
-      "gpt-4o", "gpt-4o-mini", "claude-sonnet-4-20250514",
-      "claude-3.5-haiku", "deepseek-chat", "deepseek-reasoner",
-      "gemini-2.0-flash", "gemini-2.5-pro",
-      "llama-3.1-70b", "mistral-large"
+      "gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo",
+      "claude-3.5-sonnet", "claude-3-haiku", "claude-3-opus",
+      "deepseek-v3", "deepseek-r1",
+      "gemini-1.5-pro", "gemini-1.5-flash",
+      "mistral-large", "mistral-small",
+      "llama-3.1-405b", "llama-3.1-70b",
+      "qwen-2.5-72b"
     ];
     modelSelect.innerHTML = "";
     fallbackModels.forEach((m) => {
